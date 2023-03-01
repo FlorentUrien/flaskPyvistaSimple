@@ -12,17 +12,42 @@ import os
 from flask import Flask, escape, render_template, request
 
 import pyvista
+import subprocess
+import vtk
 
 static_image_path = os.path.join('static', 'images')
 if not os.path.isdir(static_image_path):
     os.makedirs(static_image_path)
 
-
 app = Flask(__name__)
+
+
+def activate_virtual_framebuffer():
+    '''
+    Activates a virtual (headless) framebuffer for rendering 3D
+    scenes via VTK.
+
+    Most critically, this function is useful when this code is being run
+    in a Dockerized notebook, or over a server without X forwarding.
+
+    * Requires the following packages:
+      * `sudo apt-get install libgl1-mesa-dev xvfb`
+    '''
+
+    vtk.OFFSCREEN = True
+    os.environ['DISPLAY'] = ':99.0'
+
+    commands = ['Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &',
+                'sleep 3',
+                'exec "$@"']
+
+    for command in commands:
+        subprocess.call(command, shell=True)
 
 
 @app.route("/")
 def index():
+    print("11111111111")
     return render_template('index.html')
 
 
@@ -58,4 +83,7 @@ def get_img():
 
 
 if __name__ == '__main__':
-    app.run()
+    print("000000")
+    activate_virtual_framebuffer()
+    print("aaaaa")
+    app.run(host='0.0.0.0')
